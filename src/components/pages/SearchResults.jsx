@@ -5,7 +5,7 @@ import { useAuth } from "../../hooks/useAuth";
 import MediaCard from "../media/MediaCard";
 import LoadingSpinner from "../common/LoadingSpinner";
 
-const SearchResults = () => {
+function SearchResults() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const { user } = useAuth();
@@ -24,37 +24,32 @@ const SearchResults = () => {
       return;
     }
 
-    const performSearch = async () => {
+    async function performSearch() {
       try {
         setLoading(true);
         setError("");
-
         const response = await searchMulti(query, currentPage);
-
         if (currentPage === 1) {
           setResults(response.results);
         } else {
-          // Append results for pagination
           setResults((prev) => [...prev, ...response.results]);
         }
-
         setTotalPages(response.total_pages);
-      } catch (error) {
-        console.error("Search error:", error);
+      } catch (err) {
         setError("Failed to search. Please try again.");
       } finally {
         setLoading(false);
       }
-    };
+    }
 
     performSearch();
   }, [query, currentPage, navigate]);
 
-  const loadMore = () => {
+  function loadMore() {
     if (currentPage < totalPages) {
       setCurrentPage((prev) => prev + 1);
     }
-  };
+  }
 
   const filteredResults = results.filter(
     (item) => item.media_type === "movie" || item.media_type === "tv"
@@ -146,6 +141,6 @@ const SearchResults = () => {
       )}
     </div>
   );
-};
+}
 
 export default SearchResults;

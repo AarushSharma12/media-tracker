@@ -3,7 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../../hooks/useAuth";
 import { createUserDocument } from "../../services/userService";
 
-const Signup = () => {
+function Signup() {
   const [formData, setFormData] = useState({
     email: "",
     password: "",
@@ -16,34 +16,31 @@ const Signup = () => {
   const { signup } = useAuth();
   const navigate = useNavigate();
 
-  const handleChange = (e) => {
+  function handleChange(event) {
     setFormData({
       ...formData,
-      [e.target.name]: e.target.value,
+      [event.target.name]: event.target.value,
     });
-  };
+  }
 
-  const validateForm = () => {
+  function validateForm() {
     if (!formData.email || !formData.password || !formData.confirmPassword) {
       setError("Please fill in all required fields");
       return false;
     }
-
     if (formData.password.length < 6) {
       setError("Password must be at least 6 characters long");
       return false;
     }
-
     if (formData.password !== formData.confirmPassword) {
       setError("Passwords do not match");
       return false;
     }
-
     return true;
-  };
+  }
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+  async function handleSubmit(event) {
+    event.preventDefault();
 
     if (!validateForm()) return;
 
@@ -53,7 +50,6 @@ const Signup = () => {
 
       const userCredential = await signup(formData.email, formData.password);
 
-      // Create user object with proper display name
       const userWithDisplayName = {
         ...userCredential.user,
         displayName: formData.displayName || formData.email.split("@")[0],
@@ -62,14 +58,12 @@ const Signup = () => {
       await createUserDocument(userWithDisplayName);
 
       navigate("/");
-    } catch (error) {
-      console.error("Signup error:", error);
-
-      if (error.code === "auth/email-already-in-use") {
+    } catch (err) {
+      if (err.code === "auth/email-already-in-use") {
         setError("An account with this email already exists");
-      } else if (error.code === "auth/weak-password") {
+      } else if (err.code === "auth/weak-password") {
         setError("Password is too weak");
-      } else if (error.code === "auth/invalid-email") {
+      } else if (err.code === "auth/invalid-email") {
         setError("Please enter a valid email address");
       } else {
         setError("Failed to create account. Please try again.");
@@ -77,7 +71,7 @@ const Signup = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }
 
   return (
     <div className="container-fluid bg-primary bg-gradient min-vh-100 d-flex align-items-center">
@@ -90,13 +84,11 @@ const Signup = () => {
                 <p className="text-muted text-center mb-4">
                   Join MovieTracker to start tracking your favorites
                 </p>
-
                 {error && (
                   <div className="alert alert-danger" role="alert">
                     {error}
                   </div>
                 )}
-
                 <form onSubmit={handleSubmit}>
                   <div className="mb-3">
                     <label htmlFor="displayName" className="form-label">
@@ -113,7 +105,6 @@ const Signup = () => {
                       disabled={loading}
                     />
                   </div>
-
                   <div className="mb-3">
                     <label htmlFor="email" className="form-label">
                       Email <span className="text-danger">*</span>
@@ -130,7 +121,6 @@ const Signup = () => {
                       disabled={loading}
                     />
                   </div>
-
                   <div className="mb-3">
                     <label htmlFor="password" className="form-label">
                       Password <span className="text-danger">*</span>
@@ -147,7 +137,6 @@ const Signup = () => {
                       disabled={loading}
                     />
                   </div>
-
                   <div className="mb-3">
                     <label htmlFor="confirmPassword" className="form-label">
                       Confirm Password <span className="text-danger">*</span>
@@ -164,7 +153,6 @@ const Signup = () => {
                       disabled={loading}
                     />
                   </div>
-
                   <button
                     type="submit"
                     className="btn btn-primary w-100 mb-3"
@@ -173,8 +161,8 @@ const Signup = () => {
                     {loading ? (
                       <>
                         <span
-                          className="spinner-border spinner-border-sm me-2"
                           role="status"
+                          className="spinner-border spinner-border-sm me-2"
                         ></span>
                         Creating Account...
                       </>
@@ -183,7 +171,6 @@ const Signup = () => {
                     )}
                   </button>
                 </form>
-
                 <div className="text-center">
                   <p className="mb-0">
                     Already have an account?
@@ -199,6 +186,6 @@ const Signup = () => {
       </div>
     </div>
   );
-};
+}
 
 export default Signup;

@@ -1,19 +1,12 @@
 import { Link } from "react-router-dom";
 import { getImageUrl } from "../../services/tmdbApi";
 
-const MediaCard = ({ media, showAddButton = false }) => {
-  // Handle both movie and TV show data
+function MediaCard({ media, showAddButton = false }) {
   const title = media.title || media.name;
   const releaseDate = media.release_date || media.first_air_date;
   const mediaType = media.media_type || (media.title ? "movie" : "tv");
-
-  // Format release year
   const releaseYear = releaseDate ? new Date(releaseDate).getFullYear() : "N/A";
-
-  // Format rating
   const rating = media.vote_average ? media.vote_average.toFixed(1) : "N/A";
-
-  // Create link URL
   const linkUrl = `/${mediaType}/${media.id}`;
 
   return (
@@ -72,7 +65,6 @@ const MediaCard = ({ media, showAddButton = false }) => {
                 onClick={(e) => {
                   e.preventDefault();
                   // TODO: Add to watchlist functionality
-                  console.log("Add to watchlist:", title);
                 }}
               >
                 + Add to Watchlist
@@ -83,6 +75,6 @@ const MediaCard = ({ media, showAddButton = false }) => {
       </div>
     </div>
   );
-};
+}
 
 export default MediaCard;

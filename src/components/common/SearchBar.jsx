@@ -1,21 +1,20 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
-const SearchBar = ({ placeholder = "Search movies and TV shows..." }) => {
+function SearchBar({ placeholder = "Search movies and TV shows..." }) {
   const [query, setQuery] = useState("");
   const navigate = useNavigate();
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
+  function handleSubmit(event) {
+    event.preventDefault();
     if (query.trim()) {
-      // Navigate to search results page with query parameter
       navigate(`/search?q=${encodeURIComponent(query.trim())}`);
     }
-  };
+  }
 
-  const handleChange = (e) => {
-    setQuery(e.target.value);
-  };
+  function handleChange(event) {
+    setQuery(event.target.value);
+  }
 
   return (
     <form
@@ -39,6 +38,6 @@ const SearchBar = ({ placeholder = "Search movies and TV shows..." }) => {
       </button>
     </form>
   );
-};
+}
 
 export default SearchBar;

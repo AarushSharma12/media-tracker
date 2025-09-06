@@ -1,5 +1,3 @@
-// Add these functions to your existing tmdbApi.js file
-
 import axios from "axios";
 
 const API_KEY = import.meta.env.VITE_TMDB_API_KEY;
@@ -15,130 +13,117 @@ const tmdbAxios = axios.create({
 });
 
 // Get detailed information about a specific movie or TV show
-export const getMediaDetails = async (mediaType, id) => {
+export async function getMediaDetails(mediaType, id) {
   try {
     const response = await tmdbAxios.get(`/${mediaType}/${id}`);
     return response.data;
-  } catch (error) {
-    console.error("Error fetching media details:", error);
-    throw error;
+  } catch (err) {
+    throw err;
   }
-};
+}
 
 // Get cast and crew information
-export const getMediaCredits = async (mediaType, id) => {
+export async function getMediaCredits(mediaType, id) {
   try {
     const response = await tmdbAxios.get(`/${mediaType}/${id}/credits`);
     return response.data;
-  } catch (error) {
-    console.error("Error fetching media credits:", error);
-    throw error;
+  } catch (err) {
+    throw err;
   }
-};
+}
 
 // Get videos (trailers, teasers, etc.)
-export const getMediaVideos = async (mediaType, id) => {
+export async function getMediaVideos(mediaType, id) {
   try {
     const response = await tmdbAxios.get(`/${mediaType}/${id}/videos`);
     return response.data;
-  } catch (error) {
-    console.error("Error fetching media videos:", error);
-    throw error;
+  } catch (err) {
+    throw err;
   }
-};
+}
 
 // Get similar movies or TV shows
-export const getSimilarMedia = async (mediaType, id) => {
+export async function getSimilarMedia(mediaType, id) {
   try {
     const response = await tmdbAxios.get(`/${mediaType}/${id}/similar`);
     return response.data;
-  } catch (error) {
-    console.error("Error fetching similar media:", error);
-    throw error;
+  } catch (err) {
+    throw err;
   }
-};
+}
 
 // Get recommendations based on a specific movie or TV show
-export const getRecommendations = async (mediaType, id) => {
+export async function getRecommendations(mediaType, id) {
   try {
     const response = await tmdbAxios.get(`/${mediaType}/${id}/recommendations`);
     return response.data;
-  } catch (error) {
-    console.error("Error fetching recommendations:", error);
-    throw error;
+  } catch (err) {
+    throw err;
   }
-};
+}
 
 // Search for movies or TV shows
-export const searchMedia = async (mediaType, query, page = 1) => {
+export async function searchMedia(mediaType, query, page = 1) {
   try {
     const response = await tmdbAxios.get(`/search/${mediaType}`, {
-      params: {
-        query,
-        page,
-      },
+      params: { query, page },
     });
     return response.data;
-  } catch (error) {
-    console.error("Error searching media:", error);
-    throw error;
+  } catch (err) {
+    throw err;
   }
-};
+}
 
 // Get trending movies or TV shows
-export const getTrending = async (mediaType, timeWindow = "week") => {
+export async function getTrending(mediaType, timeWindow = "week") {
   try {
     const response = await tmdbAxios.get(
       `/trending/${mediaType}/${timeWindow}`
     );
     return response.data;
-  } catch (error) {
-    console.error("Error fetching trending media:", error);
-    throw error;
+  } catch (err) {
+    throw err;
   }
-};
+}
 
 // Get popular movies or TV shows
-export const getPopular = async (mediaType, page = 1) => {
+export async function getPopular(mediaType, page = 1) {
   try {
     const response = await tmdbAxios.get(`/${mediaType}/popular`, {
       params: { page },
     });
     return response.data;
-  } catch (error) {
-    console.error("Error fetching popular media:", error);
-    throw error;
+  } catch (err) {
+    throw err;
   }
-};
+}
 
 // Get top rated movies or TV shows
-export const getTopRated = async (mediaType, page = 1) => {
+export async function getTopRated(mediaType, page = 1) {
   try {
     const response = await tmdbAxios.get(`/${mediaType}/top_rated`, {
       params: { page },
     });
     return response.data;
-  } catch (error) {
-    console.error("Error fetching top rated media:", error);
-    throw error;
+  } catch (err) {
+    throw err;
   }
-};
+}
 
 // Get Image URL
-export const getImageUrl = (path, size = "original") => {
+export function getImageUrl(path, size = "original") {
   if (!path) return null;
   return `https://image.tmdb.org/t/p/${size}${path}`;
-};
+}
 
 // Search multi (movies, TV shows, people)
-export const searchMulti = async (query, page = 1) => {
+export async function searchMulti(query, page = 1) {
   try {
     const response = await tmdbAxios.get(`/search/multi`, {
       params: { query, page },
     });
     return response.data;
-  } catch (error) {
-    console.error("Error searching multi:", error);
-    throw error;
+  } catch (err) {
+    throw err;
   }
-};
+}

@@ -2,28 +2,25 @@ import { useState } from "react";
 import { useAuth } from "../../hooks/useAuth";
 import { updateUserDisplayName } from "../../services/userService";
 
-const Dashboard = () => {
+function Dashboard() {
   const { user } = useAuth();
   const [newDisplayName, setNewDisplayName] = useState("");
   const [updating, setUpdating] = useState(false);
 
-  const handleUpdateDisplayName = async (e) => {
-    e.preventDefault();
+  async function handleUpdateDisplayName(event) {
+    event.preventDefault();
     if (!newDisplayName.trim()) return;
 
     try {
       setUpdating(true);
       await updateUserDisplayName(user, newDisplayName.trim());
-
-      // Force page refresh to show updated name
       window.location.reload();
-    } catch (error) {
-      console.error("Error updating display name:", error);
+    } catch (err) {
       alert("Failed to update display name. Please try again.");
     } finally {
       setUpdating(false);
     }
-  };
+  }
 
   return (
     <div className="container mt-5">
@@ -44,8 +41,6 @@ const Dashboard = () => {
           <strong>Display Name:</strong> {user?.displayName || "Not set"}
         </p>
       </div>
-
-      {/* Quick Display Name Update */}
       <div className="card mb-4">
         <div className="card-body">
           <h5 className="card-title">Update Display Name</h5>
@@ -55,7 +50,7 @@ const Dashboard = () => {
               className="form-control"
               placeholder="Enter new display name"
               value={newDisplayName}
-              onChange={(e) => setNewDisplayName(e.target.value)}
+              onChange={(event) => setNewDisplayName(event.target.value)}
               disabled={updating}
             />
             <button
@@ -68,7 +63,6 @@ const Dashboard = () => {
           </form>
         </div>
       </div>
-
       <div className="row">
         <div className="col-md-4">
           <div className="card">
@@ -100,6 +94,6 @@ const Dashboard = () => {
       </div>
     </div>
   );
-};
+}
 
 export default Dashboard;

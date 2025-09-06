@@ -1,4 +1,4 @@
-const LoadingSpinner = ({ message = "Loading...", size = "medium" }) => {
+function LoadingSpinner({ message = "Loading...", size = "medium" }) {
   const spinnerSize = size === "small" ? "spinner-border-sm" : "";
 
   return (
@@ -12,6 +12,6 @@ const LoadingSpinner = ({ message = "Loading...", size = "medium" }) => {
       {message && <p className="mt-3 text-muted">{message}</p>}
     </div>
   );
-};
+}
 
 export default LoadingSpinner;

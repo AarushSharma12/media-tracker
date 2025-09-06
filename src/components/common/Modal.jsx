@@ -1,11 +1,4 @@
-const Modal = ({
-  show,
-  onHide,
-  title,
-  children,
-  size = "modal-lg",
-  footer,
-}) => {
+function Modal({ show, onHide, title, children, size = "modal-lg", footer }) {
   if (!show) return null;
 
   return (
@@ -23,14 +16,12 @@ const Modal = ({
               ></button>
             </div>
           )}
-
           <div className="modal-body">{children}</div>
-
           {footer && <div className="modal-footer">{footer}</div>}
         </div>
       </div>
     </div>
   );
-};
+}
 
 export default Modal;

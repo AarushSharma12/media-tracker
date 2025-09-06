@@ -1,22 +1,22 @@
-import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
-import { useAuth } from '../../hooks/useAuth';
+import { useState, useEffect } from "react";
+import { useParams, useNavigate } from "react-router-dom";
+import { useAuth } from "../../hooks/useAuth";
 import {
   getMediaDetails,
   getMediaCredits,
   getMediaVideos,
-  getSimilarMedia
-} from '../../services/tmdbApi';
+  getSimilarMedia,
+} from "../../services/tmdbApi";
 import {
   addToWatchlist,
   removeFromWatchlist,
   getUserMediaStatus,
   updateWatchedStatus,
-  addRating
-} from '../../services/userService';
-import LoadingSpinner from '../common/LoadingSpinner';
-import MediaCard from '../media/MediaCard';
-import Modal from '../common/Modal';
+  addRating,
+} from "../../services/userService";
+import LoadingSpinner from "../common/LoadingSpinner";
+import MediaCard from "../media/MediaCard";
+import Modal from "../common/Modal";
 
 function MediaDetails() {
   const { mediaType, id } = useParams();
@@ -30,7 +30,6 @@ function MediaDetails() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // User-specific states
   const [isInWatchlist, setIsInWatchlist] = useState(false);
   const [isWatched, setIsWatched] = useState(false);
   const [userRating, setUserRating] = useState(0);
@@ -48,22 +47,19 @@ function MediaDetails() {
     try {
       setLoading(true);
       setError(null);
-
-      // Fetch all media data in parallel
-      const [mediaData, creditsData, videosData, similarData] = await Promise.all([
-        getMediaDetails(mediaType, id),
-        getMediaCredits(mediaType, id),
-        getMediaVideos(mediaType, id),
-        getSimilarMedia(mediaType, id)
-      ]);
-
+      const [mediaData, creditsData, videosData, similarData] =
+        await Promise.all([
+          getMediaDetails(mediaType, id),
+          getMediaCredits(mediaType, id),
+          getMediaVideos(mediaType, id),
+          getSimilarMedia(mediaType, id),
+        ]);
       setMedia(mediaData);
       setCredits(creditsData);
       setVideos(videosData.results || []);
       setSimilar(similarData.results || []);
     } catch (err) {
-      setError('Failed to load media details. Please try again.');
-      console.error('Error fetching media details:', err);
+      setError("Failed to load media details. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -71,23 +67,19 @@ function MediaDetails() {
 
   async function checkUserStatus() {
     if (!user) return;
-
     try {
       const status = await getUserMediaStatus(user.uid, id, mediaType);
       setIsInWatchlist(status.inWatchlist || false);
       setIsWatched(status.watched || false);
       setUserRating(status.rating || 0);
-    } catch (err) {
-      console.error('Error checking user status:', err);
-    }
+    } catch (err) {}
   }
 
   function handleWatchlistToggle() {
     if (!user) {
-      navigate('/login');
+      navigate("/login");
       return;
     }
-
     async function toggleWatchlist() {
       try {
         if (isInWatchlist) {
@@ -100,54 +92,43 @@ function MediaDetails() {
             title: media.title || media.name,
             poster_path: media.poster_path,
             vote_average: media.vote_average,
-            release_date: media.release_date || media.first_air_date
+            release_date: media.release_date || media.first_air_date,
           };
           await addToWatchlist(user.uid, mediaData);
           setIsInWatchlist(true);
         }
-      } catch (err) {
-        console.error('Error updating watchlist:', err);
-      }
+      } catch (err) {}
     }
-
     toggleWatchlist();
   }
 
   function handleWatchedToggle() {
     if (!user) {
-      navigate('/login');
+      navigate("/login");
       return;
     }
-
     async function toggleWatched() {
       try {
         await updateWatchedStatus(user.uid, id, mediaType, !isWatched);
         setIsWatched(!isWatched);
-      } catch (err) {
-        console.error('Error updating watched status:', err);
-      }
+      } catch (err) {}
     }
-
     toggleWatched();
   }
 
   function handleRating(rating) {
     if (!user) {
-      navigate('/login');
+      navigate("/login");
       return;
     }
-
     async function saveRating() {
       try {
         await addRating(user.uid, id, mediaType, rating);
         setUserRating(rating);
         setShowRatingModal(false);
         setHoverRating(0);
-      } catch (err) {
-        console.error('Error adding rating:', err);
-      }
+      } catch (err) {}
     }
-
     saveRating();
   }
 
@@ -180,28 +161,25 @@ function MediaDetails() {
     );
   }
 
-  const releaseYear = media.release_date || media.first_air_date
-    ? new Date(media.release_date || media.first_air_date).getFullYear()
-    : null;
+  const releaseYear =
+    media.release_date || media.first_air_date
+      ? new Date(media.release_date || media.first_air_date).getFullYear()
+      : null;
   const runtime = media.runtime || media.episode_run_time?.[0];
-  const trailer = videos.find((v) => {
-    return v.type === 'Trailer' && v.site === 'YouTube';
-  });
-  const director = credits?.crew?.find((person) => {
-    return person.job === 'Director';
-  });
+  const trailer = videos.find(
+    (v) => v.type === "Trailer" && v.site === "YouTube"
+  );
+  const director = credits?.crew?.find((person) => person.job === "Director");
   const topCast = credits?.cast?.slice(0, 6) || [];
 
-  // Create rating stars for modal
   const ratingStars = [...Array(10)].map((_, index) => {
     const starValue = index + 1;
     const isFilled = starValue <= (hoverRating || userRating);
-
     return (
       <i
         key={starValue}
-        className={`bi bi-star${isFilled ? '-fill' : ''} fs-3 mx-1`}
-        style={{ cursor: 'pointer', color: isFilled ? '#ffc107' : '#6c757d' }}
+        className={`bi bi-star${isFilled ? "-fill" : ""} fs-3 mx-1`}
+        style={{ cursor: "pointer", color: isFilled ? "#ffc107" : "#6c757d" }}
         onMouseEnter={() => setHoverRating(starValue)}
         onMouseLeave={() => setHoverRating(0)}
         onClick={() => handleRating(starValue)}
@@ -209,51 +187,43 @@ function MediaDetails() {
     );
   });
 
-  // Create similar media cards
-  const similarMediaCards = similar.slice(0, 6).map((item) => {
-    return (
-      <MediaCard 
-        key={item.id} 
-        media={item} 
-        showAddButton={!!user}
-      />
-    );
-  });
+  const similarMediaCards = similar
+    .slice(0, 6)
+    .map((item) => (
+      <MediaCard key={item.id} media={item} showAddButton={!!user} />
+    ));
 
-  // Create cast cards
-  const castCards = topCast.map((actor) => {
-    return (
-      <div key={actor.id} className="col-6 col-md-4 col-lg-2">
-        <div className="card h-100 bg-dark text-white">
-          <img
-            src={
-              actor.profile_path
-                ? `https://image.tmdb.org/t/p/w200${actor.profile_path}`
-                : '/placeholder-person.png'
-            }
-            className="card-img-top"
-            alt={actor.name}
-          />
-          <div className="card-body p-2">
-            <h6 className="card-title mb-1">{actor.name}</h6>
-            <p className="card-text small text-muted">{actor.character}</p>
-          </div>
+  const castCards = topCast.map((actor) => (
+    <div key={actor.id} className="col-6 col-md-4 col-lg-2">
+      <div className="card h-100 bg-dark text-white">
+        <img
+          src={
+            actor.profile_path
+              ? `https://image.tmdb.org/t/p/w200${actor.profile_path}`
+              : "/placeholder-person.png"
+          }
+          className="card-img-top"
+          alt={actor.name}
+        />
+        <div className="card-body p-2">
+          <h6 className="card-title mb-1">{actor.name}</h6>
+          <p className="card-text small text-muted">{actor.character}</p>
         </div>
       </div>
-    );
-  });
+    </div>
+  ));
 
   return (
     <div className="bg-dark text-white min-vh-100">
-      {/* Hero Section with Backdrop */}
+      {/* Hero Section */}
       <div
         className="position-relative"
         style={{
           backgroundImage: `linear-gradient(to bottom, rgba(0,0,0,0.7), rgba(0,0,0,0.9)), 
                            url(https://image.tmdb.org/t/p/original${media.backdrop_path})`,
-          backgroundSize: 'cover',
-          backgroundPosition: 'center',
-          minHeight: '70vh'
+          backgroundSize: "cover",
+          backgroundPosition: "center",
+          minHeight: "70vh",
         }}
       >
         <div className="container py-5">
@@ -263,13 +233,12 @@ function MediaDetails() {
                 src={
                   media.poster_path
                     ? `https://image.tmdb.org/t/p/w500${media.poster_path}`
-                    : '/placeholder-poster.png'
+                    : "/placeholder-poster.png"
                 }
                 className="img-fluid rounded shadow-lg"
                 alt={media.title || media.name}
               />
             </div>
-
             <div className="col-12 col-md-8 col-lg-9 mt-4 mt-md-0">
               <h1 className="display-4 fw-bold">
                 {media.title || media.name}
@@ -277,7 +246,6 @@ function MediaDetails() {
                   <span className="fw-light text-muted"> ({releaseYear})</span>
                 )}
               </h1>
-
               <div className="d-flex flex-wrap align-items-center gap-3 mb-3">
                 <span className="badge bg-warning text-dark fs-6">
                   <i className="bi bi-star-fill me-1"></i>
@@ -290,59 +258,54 @@ function MediaDetails() {
                   </span>
                 )}
               </div>
-
               {media.genres && (
                 <div className="mb-3">
-                  {media.genres.map((genre) => {
-                    return (
-                      <span key={genre.id} className="badge bg-secondary me-2">
-                        {genre.name}
-                      </span>
-                    );
-                  })}
+                  {media.genres.map((genre) => (
+                    <span key={genre.id} className="badge bg-secondary me-2">
+                      {genre.name}
+                    </span>
+                  ))}
                 </div>
               )}
-
               <p className="lead">{media.overview}</p>
-
               {director && (
                 <p className="mb-4">
                   <strong>Director:</strong> {director.name}
                 </p>
               )}
-
               {/* Action Buttons */}
               <div className="d-flex flex-wrap gap-2">
                 <button
                   className={`btn ${
-                    isInWatchlist ? 'btn-success' : 'btn-outline-light'
+                    isInWatchlist ? "btn-success" : "btn-outline-light"
                   }`}
                   onClick={handleWatchlistToggle}
                 >
                   <i
                     className={`bi bi-${
-                      isInWatchlist ? 'check-circle-fill' : 'plus-circle'
+                      isInWatchlist ? "check-circle-fill" : "plus-circle"
                     } me-2`}
                   ></i>
-                  {isInWatchlist ? 'In Watchlist' : 'Add to Watchlist'}
+                  {isInWatchlist ? "In Watchlist" : "Add to Watchlist"}
                 </button>
-
                 <button
-                  className={`btn ${isWatched ? 'btn-info' : 'btn-outline-info'}`}
+                  className={`btn ${
+                    isWatched ? "btn-info" : "btn-outline-info"
+                  }`}
                   onClick={handleWatchedToggle}
                 >
-                  <i className={`bi bi-${isWatched ? 'eye-fill' : 'eye'} me-2`}></i>
-                  {isWatched ? 'Watched' : 'Mark as Watched'}
+                  <i
+                    className={`bi bi-${isWatched ? "eye-fill" : "eye"} me-2`}
+                  ></i>
+                  {isWatched ? "Watched" : "Mark as Watched"}
                 </button>
-
                 <button
                   className="btn btn-warning"
                   onClick={() => setShowRatingModal(true)}
                 >
                   <i className="bi bi-star me-2"></i>
-                  {userRating ? `Rated: ${userRating}/10` : 'Rate'}
+                  {userRating ? `Rated: ${userRating}/10` : "Rate"}
                 </button>
-
                 {trailer && (
                   <a
                     href={`https://www.youtube.com/watch?v=${trailer.key}`}
@@ -379,7 +342,7 @@ function MediaDetails() {
           )}
           {media.original_language && (
             <div className="col-md-6 col-lg-3">
-              <strong className="text-info">Language:</strong>{' '}
+              <strong className="text-info">Language:</strong>{" "}
               {media.original_language.toUpperCase()}
             </div>
           )}
@@ -397,13 +360,13 @@ function MediaDetails() {
           )}
           {media.number_of_seasons && (
             <div className="col-md-6 col-lg-3">
-              <strong className="text-info">Seasons:</strong>{' '}
+              <strong className="text-info">Seasons:</strong>{" "}
               {media.number_of_seasons}
             </div>
           )}
           {media.number_of_episodes && (
             <div className="col-md-6 col-lg-3">
-              <strong className="text-info">Episodes:</strong>{' '}
+              <strong className="text-info">Episodes:</strong>{" "}
               {media.number_of_episodes}
             </div>
           )}
@@ -416,28 +379,23 @@ function MediaDetails() {
           <h2 className="mb-4 border-bottom border-secondary pb-2">
             You Might Also Like
           </h2>
-          <div className="row">
-            {similarMediaCards}
-          </div>
+          <div className="row">{similarMediaCards}</div>
         </section>
       )}
 
       {/* Rating Modal */}
       {showRatingModal && (
-        <Modal 
-          show={showRatingModal} 
+        <Modal
+          show={showRatingModal}
           onHide={handleCloseModal}
-          title={`Rate this ${mediaType === 'movie' ? 'Movie' : 'Show'}`}
+          title={`Rate this ${mediaType === "movie" ? "Movie" : "Show"}`}
         >
           <div className="text-center">
             <div className="mb-3">{ratingStars}</div>
             <p className="fs-4 text-warning mb-4">
               {hoverRating || userRating || 0}/10
             </p>
-            <button
-              className="btn btn-secondary"
-              onClick={handleCloseModal}
-            >
+            <button className="btn btn-secondary" onClick={handleCloseModal}>
               Cancels
             </button>
           </div>

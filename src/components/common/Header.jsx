@@ -2,21 +2,18 @@ import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../../hooks/useAuth";
 import SearchBar from "./SearchBar";
 
-const Header = () => {
+function Header() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
 
-  const handleLogout = async () => {
+  async function handleLogout() {
     try {
       await logout();
       navigate("/");
-    } catch (error) {
-      console.error("Failed to logout:", error);
-    }
-  };
+    } catch (err) {}
+  }
 
-  // Get display name from user object or default to email username
-  const getDisplayName = () => {
+  function getDisplayName() {
     if (user?.displayName) {
       return user.displayName;
     }
@@ -24,7 +21,7 @@ const Header = () => {
       return user.email.split("@")[0];
     }
     return "User";
-  };
+  }
 
   return (
     <nav className="navbar navbar-expand-lg navbar-dark bg-primary">
@@ -32,7 +29,6 @@ const Header = () => {
         <Link className="navbar-brand fw-bold" to="/">
           🎬 MovieTracker
         </Link>
-
         <button
           className="navbar-toggler"
           type="button"
@@ -41,14 +37,10 @@ const Header = () => {
         >
           <span className="navbar-toggler-icon"></span>
         </button>
-
         <div className="collapse navbar-collapse" id="navbarNav">
-          {/* Search Bar - Center */}
           <div className="mx-auto">
             <SearchBar />
           </div>
-
-          {/* User Menu - Right */}
           <div className="navbar-nav">
             {user ? (
               <>
@@ -80,6 +72,6 @@ const Header = () => {
       </div>
     </nav>
   );
-};
+}
 
 export default Header;

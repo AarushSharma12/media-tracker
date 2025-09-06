@@ -2,26 +2,27 @@ import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../../hooks/useAuth";
 
-const Login = () => {
+function Login() {
   const [formData, setFormData] = useState({
     email: "",
     password: "",
   });
+  
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
   const { login } = useAuth();
   const navigate = useNavigate();
 
-  const handleChange = (e) => {
+  function handleChange(event) {
     setFormData({
       ...formData,
-      [e.target.name]: e.target.value,
+      [event.target.name]: event.target.value,
     });
-  };
+  }
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+  async function handleSubmit(event) {
+    event.preventDefault();
 
     if (!formData.email || !formData.password) {
       setError("Please fill in all fields");
@@ -33,13 +34,12 @@ const Login = () => {
       setLoading(true);
       await login(formData.email, formData.password);
       navigate("/");
-    } catch (error) {
+    } catch (err) {
       setError("Failed to log in. Please check your credentials.");
-      console.error("Login error:", error);
     } finally {
       setLoading(false);
     }
-  };
+  }
 
   return (
     <div className="container-fluid bg-primary bg-gradient min-vh-100 d-flex align-items-center">
@@ -128,6 +128,6 @@ const Login = () => {
       </div>
     </div>
   );
-};
+}
 
 export default Login;

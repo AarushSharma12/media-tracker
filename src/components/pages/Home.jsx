@@ -5,7 +5,7 @@ import { getTrending, getPopular } from "../../services/tmdbApi";
 import MediaCard from "../media/MediaCard";
 import LoadingSpinner from "../common/LoadingSpinner";
 
-const Home = () => {
+function Home() {
   const { user } = useAuth();
   const [trendingContent, setTrendingContent] = useState([]);
   const [popularMovies, setPopularMovies] = useState([]);
@@ -14,28 +14,23 @@ const Home = () => {
   const [error, setError] = useState("");
 
   useEffect(() => {
-    const fetchContent = async () => {
+    async function fetchContent() {
       try {
         setLoading(true);
-
-        // Fetch all content in parallel
         const [trendingData, moviesData, tvData] = await Promise.all([
           getTrending("all", "week"),
           getPopular("movie"),
           getPopular("tv"),
         ]);
-
-        setTrendingContent(trendingData.results.slice(0, 8)); // Show top 8
+        setTrendingContent(trendingData.results.slice(0, 8));
         setPopularMovies(moviesData.results.slice(0, 8));
         setPopularTVShows(tvData.results.slice(0, 8));
-      } catch (error) {
-        console.error("Error fetching content:", error);
+      } catch (err) {
         setError("Failed to load content. Please check your TMDB API key.");
       } finally {
         setLoading(false);
       }
-    };
-
+    }
     fetchContent();
   }, []);
 
@@ -158,6 +153,6 @@ const Home = () => {
       </div>
     </div>
   );
-};
+}
 
 export default Home;
