@@ -123,3 +123,22 @@ export const getTopRated = async (mediaType, page = 1) => {
     throw error;
   }
 };
+
+// Get Image URL
+export const getImageUrl = (path, size = "original") => {
+  if (!path) return null;
+  return `https://image.tmdb.org/t/p/${size}${path}`;
+};
+
+// Search multi (movies, TV shows, people)
+export const searchMulti = async (query, page = 1) => {
+  try {
+    const response = await tmdbAxios.get(`/search/multi`, {
+      params: { query, page },
+    });
+    return response.data;
+  } catch (error) {
+    console.error("Error searching multi:", error);
+    throw error;
+  }
+};

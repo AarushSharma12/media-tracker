@@ -1,11 +1,7 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { useAuth } from "../../hooks/useAuth";
-import {
-  getTrending,
-  getPopularMovies,
-  getPopularTVShows,
-} from "../../services/tmdbApi";
+import { getTrending, getPopular } from "../../services/tmdbApi";
 import MediaCard from "../media/MediaCard";
 import LoadingSpinner from "../common/LoadingSpinner";
 
@@ -25,8 +21,8 @@ const Home = () => {
         // Fetch all content in parallel
         const [trendingData, moviesData, tvData] = await Promise.all([
           getTrending("all", "week"),
-          getPopularMovies(),
-          getPopularTVShows(),
+          getPopular("movie"),
+          getPopular("tv"),
         ]);
 
         setTrendingContent(trendingData.results.slice(0, 8)); // Show top 8

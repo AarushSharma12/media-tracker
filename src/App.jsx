@@ -41,12 +41,9 @@ function App() {
                   </ProtectedRoute>
                 }
               />
+
+              <Route path="/:mediaType/:id" element={<MediaDetails />} />
             </Routes>
-
-            <Route path="/search" element={<SearchResults />} />
-
-            {/* Add the MediaDetails route */}
-            <Route path="/:mediaType/:id" element={<MediaDetails />} />
           </main>
         </div>
       </Router>

@@ -1,32 +1,29 @@
-import { doc, setDoc, getDoc, updateDoc } from "firebase/firestore";
+import {
+  doc,
+  setDoc,
+  getDoc,
+  updateDoc,
+  arrayUnion,
+  arrayRemove,
+} from "firebase/firestore";
 import { updateProfile } from "firebase/auth";
 import { db } from "./firebaseConfig";
 
-// Debug version with lots of logging
+// Create user document when signing up
 export const createUserDocument = async (user) => {
-  console.log("🔍 createUserDocument called with user:", user);
+  console.log("Creating user document for:", user.uid);
 
   if (!user) {
-    console.error("❌ No user provided to createUserDocument");
+    console.error("No user provided to createUserDocument");
     return;
   }
 
-  console.log("✅ User ID:", user.uid);
-  console.log("✅ User email:", user.email);
-  console.log("✅ Database instance:", db);
-
   const userRef = doc(db, "users", user.uid);
-  console.log("✅ User reference created:", userRef);
 
   try {
-    // Check if user document already exists
-    console.log("🔍 Checking if user document exists...");
     const userSnap = await getDoc(userRef);
-    console.log("✅ getDoc completed. Document exists:", userSnap.exists());
 
     if (!userSnap.exists()) {
-      console.log("🔍 Creating new user document...");
-
       const userData = {
         displayName: user.displayName || user.email.split("@")[0],
         email: user.email,
@@ -36,68 +33,49 @@ export const createUserDocument = async (user) => {
         },
       };
 
-      console.log("✅ User data to save:", userData);
-
       await setDoc(userRef, userData);
-      console.log("🎉 User document created successfully!");
+      console.log("User document created successfully!");
 
-      // Try to create media lists
-      console.log("🔍 Creating user media lists...");
+      // Create user media lists
       await createUserMediaLists(user.uid);
-      console.log("🎉 Everything completed successfully!");
-    } else {
-      console.log("ℹ️ User document already exists, skipping creation");
     }
 
     return userRef;
   } catch (error) {
-    console.error("❌ Error in createUserDocument:", error);
-    console.error("❌ Error code:", error.code);
-    console.error("❌ Error message:", error.message);
-    console.error("❌ Full error object:", error);
+    console.error("Error in createUserDocument:", error);
     throw error;
   }
 };
 
-// Debug version of media lists creation
+// Create initial media lists for user
 export const createUserMediaLists = async (userId) => {
-  console.log("🔍 createUserMediaLists called for user:", userId);
-
   try {
     const userMediaRef = doc(db, "userMedia", userId);
-    console.log("✅ UserMedia reference created:", userMediaRef);
 
     const mediaData = {
       watchlist: [],
       watching: [],
       completed: [],
       favorites: [],
+      ratings: {},
       lastUpdated: new Date(),
     };
 
-    console.log("✅ Media data to save:", mediaData);
-
     await setDoc(userMediaRef, mediaData);
-    console.log("🎉 User media lists created successfully!");
+    console.log("User media lists created successfully!");
   } catch (error) {
-    console.error("❌ Error in createUserMediaLists:", error);
-    console.error("❌ Error code:", error.code);
-    console.error("❌ Error message:", error.message);
+    console.error("Error in createUserMediaLists:", error);
     throw error;
   }
 };
 
-// Update user display name in both Firebase Auth and Firestore
+// Update user display name
 export const updateUserDisplayName = async (user, newDisplayName) => {
-  console.log("🔍 Updating display name for user:", user.uid);
-  console.log("🔍 New display name:", newDisplayName);
-
   try {
     // Update Firebase Auth profile
     await updateProfile(user, {
       displayName: newDisplayName,
     });
-    console.log("✅ Firebase Auth profile updated");
 
     // Update Firestore document
     const userRef = doc(db, "users", user.uid);
@@ -105,12 +83,11 @@ export const updateUserDisplayName = async (user, newDisplayName) => {
       displayName: newDisplayName,
       lastUpdated: new Date(),
     });
-    console.log("✅ Firestore document updated");
 
-    console.log("🎉 Display name updated successfully!");
+    console.log("Display name updated successfully!");
     return true;
   } catch (error) {
-    console.error("❌ Error updating display name:", error);
+    console.error("Error updating display name:", error);
     throw error;
   }
 };
@@ -130,5 +107,177 @@ export const getUserProfile = async (userId) => {
   } catch (error) {
     console.error("Error getting user profile:", error);
     return null;
+  }
+};
+
+// Add media to watchlist
+export const addToWatchlist = async (userId, mediaData) => {
+  try {
+    const userMediaRef = doc(db, "userMedia", userId);
+
+    // First check if document exists, create if not
+    const docSnap = await getDoc(userMediaRef);
+    if (!docSnap.exists()) {
+      await createUserMediaLists(userId);
+    }
+
+    await updateDoc(userMediaRef, {
+      watchlist: arrayUnion({
+        ...mediaData,
+        addedAt: new Date(),
+      }),
+      lastUpdated: new Date(),
+    });
+
+    console.log("Added to watchlist successfully!");
+    return true;
+  } catch (error) {
+    console.error("Error adding to watchlist:", error);
+    throw error;
+  }
+};
+
+// Remove media from watchlist
+export const removeFromWatchlist = async (userId, mediaId, mediaType) => {
+  try {
+    const userMediaRef = doc(db, "userMedia", userId);
+    const docSnap = await getDoc(userMediaRef);
+
+    if (docSnap.exists()) {
+      const currentWatchlist = docSnap.data().watchlist || [];
+      const updatedWatchlist = currentWatchlist.filter(
+        (item) => !(item.id === mediaId && item.mediaType === mediaType)
+      );
+
+      await updateDoc(userMediaRef, {
+        watchlist: updatedWatchlist,
+        lastUpdated: new Date(),
+      });
+
+      console.log("Removed from watchlist successfully!");
+      return true;
+    }
+  } catch (error) {
+    console.error("Error removing from watchlist:", error);
+    throw error;
+  }
+};
+
+// Get user's media status (watchlist, watched, rating)
+export const getUserMediaStatus = async (userId, mediaId, mediaType) => {
+  try {
+    const userMediaRef = doc(db, "userMedia", userId);
+    const docSnap = await getDoc(userMediaRef);
+
+    if (!docSnap.exists()) {
+      return {
+        inWatchlist: false,
+        watched: false,
+        rating: 0,
+      };
+    }
+
+    const data = docSnap.data();
+    const watchlist = data.watchlist || [];
+    const completed = data.completed || [];
+    const ratings = data.ratings || {};
+
+    const inWatchlist = watchlist.some(
+      (item) => item.id === mediaId && item.mediaType === mediaType
+    );
+
+    const watched = completed.some(
+      (item) => item.id === mediaId && item.mediaType === mediaType
+    );
+
+    const ratingKey = `${mediaType}_${mediaId}`;
+    const rating = ratings[ratingKey] || 0;
+
+    return {
+      inWatchlist,
+      watched,
+      rating,
+    };
+  } catch (error) {
+    console.error("Error getting user media status:", error);
+    return {
+      inWatchlist: false,
+      watched: false,
+      rating: 0,
+    };
+  }
+};
+
+// Update watched status
+export const updateWatchedStatus = async (
+  userId,
+  mediaId,
+  mediaType,
+  watched
+) => {
+  try {
+    const userMediaRef = doc(db, "userMedia", userId);
+    const docSnap = await getDoc(userMediaRef);
+
+    if (!docSnap.exists()) {
+      await createUserMediaLists(userId);
+    }
+
+    const mediaItem = {
+      id: mediaId,
+      mediaType: mediaType,
+      watchedAt: new Date(),
+    };
+
+    if (watched) {
+      // Add to completed list
+      await updateDoc(userMediaRef, {
+        completed: arrayUnion(mediaItem),
+        lastUpdated: new Date(),
+      });
+    } else {
+      // Remove from completed list
+      const data = docSnap.data();
+      const completed = data.completed || [];
+      const updatedCompleted = completed.filter(
+        (item) => !(item.id === mediaId && item.mediaType === mediaType)
+      );
+
+      await updateDoc(userMediaRef, {
+        completed: updatedCompleted,
+        lastUpdated: new Date(),
+      });
+    }
+
+    console.log("Watched status updated successfully!");
+    return true;
+  } catch (error) {
+    console.error("Error updating watched status:", error);
+    throw error;
+  }
+};
+
+// Add or update rating
+export const addRating = async (userId, mediaId, mediaType, rating) => {
+  try {
+    const userMediaRef = doc(db, "userMedia", userId);
+    const docSnap = await getDoc(userMediaRef);
+
+    if (!docSnap.exists()) {
+      await createUserMediaLists(userId);
+    }
+
+    const ratingKey = `${mediaType}_${mediaId}`;
+
+    await updateDoc(userMediaRef, {
+      [`ratings.${ratingKey}`]: rating,
+      lastUpdated: new Date(),
+    });
+
+    console.log("Rating added successfully!");
+    return true;
+  } catch (error) {
+    console.error("Error adding rating:", error);
+    throw error;
   }
 };

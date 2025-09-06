@@ -1,22 +1,22 @@
-import React, { useState, useEffect } from "react";
-import { useParams, useNavigate } from "react-router-dom";
-import { useAuth } from "../hooks/useAuth";
+import React, { useState, useEffect } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
+import { useAuth } from '../../hooks/useAuth';
 import {
   getMediaDetails,
   getMediaCredits,
   getMediaVideos,
-  getSimilarMedia,
-} from "../services/tmdbApi";
+  getSimilarMedia
+} from '../../services/tmdbApi';
 import {
   addToWatchlist,
   removeFromWatchlist,
   getUserMediaStatus,
   updateWatchedStatus,
-  addRating,
-} from "../services/userService";
-import LoadingSpinner from "./LoadingSpinner";
-import MediaCard from "./MediaCard";
-import Modal from "./Modal";
+  addRating
+} from '../../services/userService';
+import LoadingSpinner from '../common/LoadingSpinner';
+import MediaCard from '../media/MediaCard';
+import Modal from '../common/Modal';
 
 function MediaDetails() {
   const { mediaType, id } = useParams();
@@ -50,21 +50,20 @@ function MediaDetails() {
       setError(null);
 
       // Fetch all media data in parallel
-      const [mediaData, creditsData, videosData, similarData] =
-        await Promise.all([
-          getMediaDetails(mediaType, id),
-          getMediaCredits(mediaType, id),
-          getMediaVideos(mediaType, id),
-          getSimilarMedia(mediaType, id),
-        ]);
+      const [mediaData, creditsData, videosData, similarData] = await Promise.all([
+        getMediaDetails(mediaType, id),
+        getMediaCredits(mediaType, id),
+        getMediaVideos(mediaType, id),
+        getSimilarMedia(mediaType, id)
+      ]);
 
       setMedia(mediaData);
       setCredits(creditsData);
       setVideos(videosData.results || []);
       setSimilar(similarData.results || []);
     } catch (err) {
-      setError("Failed to load media details. Please try again.");
-      console.error("Error fetching media details:", err);
+      setError('Failed to load media details. Please try again.');
+      console.error('Error fetching media details:', err);
     } finally {
       setLoading(false);
     }
@@ -79,17 +78,17 @@ function MediaDetails() {
       setIsWatched(status.watched || false);
       setUserRating(status.rating || 0);
     } catch (err) {
-      console.error("Error checking user status:", err);
+      console.error('Error checking user status:', err);
     }
   }
 
   function handleWatchlistToggle() {
     if (!user) {
-      navigate("/login");
+      navigate('/login');
       return;
     }
 
-    const toggleWatchlist = async () => {
+    async function toggleWatchlist() {
       try {
         if (isInWatchlist) {
           await removeFromWatchlist(user.uid, id, mediaType);
@@ -101,55 +100,60 @@ function MediaDetails() {
             title: media.title || media.name,
             poster_path: media.poster_path,
             vote_average: media.vote_average,
-            release_date: media.release_date || media.first_air_date,
+            release_date: media.release_date || media.first_air_date
           };
           await addToWatchlist(user.uid, mediaData);
           setIsInWatchlist(true);
         }
       } catch (err) {
-        console.error("Error updating watchlist:", err);
+        console.error('Error updating watchlist:', err);
       }
-    };
+    }
 
     toggleWatchlist();
   }
 
   function handleWatchedToggle() {
     if (!user) {
-      navigate("/login");
+      navigate('/login');
       return;
     }
 
-    const toggleWatched = async () => {
+    async function toggleWatched() {
       try {
         await updateWatchedStatus(user.uid, id, mediaType, !isWatched);
         setIsWatched(!isWatched);
       } catch (err) {
-        console.error("Error updating watched status:", err);
+        console.error('Error updating watched status:', err);
       }
-    };
+    }
 
     toggleWatched();
   }
 
   function handleRating(rating) {
     if (!user) {
-      navigate("/login");
+      navigate('/login');
       return;
     }
 
-    const saveRating = async () => {
+    async function saveRating() {
       try {
         await addRating(user.uid, id, mediaType, rating);
         setUserRating(rating);
         setShowRatingModal(false);
         setHoverRating(0);
       } catch (err) {
-        console.error("Error adding rating:", err);
+        console.error('Error adding rating:', err);
       }
-    };
+    }
 
     saveRating();
+  }
+
+  function handleCloseModal() {
+    setShowRatingModal(false);
+    setHoverRating(0);
   }
 
   if (loading) {
@@ -176,16 +180,15 @@ function MediaDetails() {
     );
   }
 
-  const releaseYear =
-    media.release_date || media.first_air_date
-      ? new Date(media.release_date || media.first_air_date).getFullYear()
-      : null;
+  const releaseYear = media.release_date || media.first_air_date
+    ? new Date(media.release_date || media.first_air_date).getFullYear()
+    : null;
   const runtime = media.runtime || media.episode_run_time?.[0];
   const trailer = videos.find((v) => {
-    return v.type === "Trailer" && v.site === "YouTube";
+    return v.type === 'Trailer' && v.site === 'YouTube';
   });
   const director = credits?.crew?.find((person) => {
-    return person.job === "Director";
+    return person.job === 'Director';
   });
   const topCast = credits?.cast?.slice(0, 6) || [];
 
@@ -197,8 +200,8 @@ function MediaDetails() {
     return (
       <i
         key={starValue}
-        className={`bi bi-star${isFilled ? "-fill" : ""} fs-3 mx-1`}
-        style={{ cursor: "pointer", color: isFilled ? "#ffc107" : "#6c757d" }}
+        className={`bi bi-star${isFilled ? '-fill' : ''} fs-3 mx-1`}
+        style={{ cursor: 'pointer', color: isFilled ? '#ffc107' : '#6c757d' }}
         onMouseEnter={() => setHoverRating(starValue)}
         onMouseLeave={() => setHoverRating(0)}
         onClick={() => handleRating(starValue)}
@@ -209,9 +212,11 @@ function MediaDetails() {
   // Create similar media cards
   const similarMediaCards = similar.slice(0, 6).map((item) => {
     return (
-      <div key={item.id} className="col">
-        <MediaCard media={item} mediaType={mediaType} />
-      </div>
+      <MediaCard 
+        key={item.id} 
+        media={item} 
+        showAddButton={!!user}
+      />
     );
   });
 
@@ -224,7 +229,7 @@ function MediaDetails() {
             src={
               actor.profile_path
                 ? `https://image.tmdb.org/t/p/w200${actor.profile_path}`
-                : "/placeholder-person.png"
+                : '/placeholder-person.png'
             }
             className="card-img-top"
             alt={actor.name}
@@ -246,9 +251,9 @@ function MediaDetails() {
         style={{
           backgroundImage: `linear-gradient(to bottom, rgba(0,0,0,0.7), rgba(0,0,0,0.9)), 
                            url(https://image.tmdb.org/t/p/original${media.backdrop_path})`,
-          backgroundSize: "cover",
-          backgroundPosition: "center",
-          minHeight: "70vh",
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+          minHeight: '70vh'
         }}
       >
         <div className="container py-5">
@@ -258,7 +263,7 @@ function MediaDetails() {
                 src={
                   media.poster_path
                     ? `https://image.tmdb.org/t/p/w500${media.poster_path}`
-                    : "/placeholder-poster.png"
+                    : '/placeholder-poster.png'
                 }
                 className="img-fluid rounded shadow-lg"
                 alt={media.title || media.name}
@@ -310,28 +315,24 @@ function MediaDetails() {
               <div className="d-flex flex-wrap gap-2">
                 <button
                   className={`btn ${
-                    isInWatchlist ? "btn-success" : "btn-outline-light"
+                    isInWatchlist ? 'btn-success' : 'btn-outline-light'
                   }`}
                   onClick={handleWatchlistToggle}
                 >
                   <i
                     className={`bi bi-${
-                      isInWatchlist ? "check-circle-fill" : "plus-circle"
+                      isInWatchlist ? 'check-circle-fill' : 'plus-circle'
                     } me-2`}
                   ></i>
-                  {isInWatchlist ? "In Watchlist" : "Add to Watchlist"}
+                  {isInWatchlist ? 'In Watchlist' : 'Add to Watchlist'}
                 </button>
 
                 <button
-                  className={`btn ${
-                    isWatched ? "btn-info" : "btn-outline-info"
-                  }`}
+                  className={`btn ${isWatched ? 'btn-info' : 'btn-outline-info'}`}
                   onClick={handleWatchedToggle}
                 >
-                  <i
-                    className={`bi bi-${isWatched ? "eye-fill" : "eye"} me-2`}
-                  ></i>
-                  {isWatched ? "Watched" : "Mark as Watched"}
+                  <i className={`bi bi-${isWatched ? 'eye-fill' : 'eye'} me-2`}></i>
+                  {isWatched ? 'Watched' : 'Mark as Watched'}
                 </button>
 
                 <button
@@ -339,7 +340,7 @@ function MediaDetails() {
                   onClick={() => setShowRatingModal(true)}
                 >
                   <i className="bi bi-star me-2"></i>
-                  {userRating ? `Rated: ${userRating}/10` : "Rate"}
+                  {userRating ? `Rated: ${userRating}/10` : 'Rate'}
                 </button>
 
                 {trailer && (
@@ -378,7 +379,7 @@ function MediaDetails() {
           )}
           {media.original_language && (
             <div className="col-md-6 col-lg-3">
-              <strong className="text-info">Language:</strong>{" "}
+              <strong className="text-info">Language:</strong>{' '}
               {media.original_language.toUpperCase()}
             </div>
           )}
@@ -396,13 +397,13 @@ function MediaDetails() {
           )}
           {media.number_of_seasons && (
             <div className="col-md-6 col-lg-3">
-              <strong className="text-info">Seasons:</strong>{" "}
+              <strong className="text-info">Seasons:</strong>{' '}
               {media.number_of_seasons}
             </div>
           )}
           {media.number_of_episodes && (
             <div className="col-md-6 col-lg-3">
-              <strong className="text-info">Episodes:</strong>{" "}
+              <strong className="text-info">Episodes:</strong>{' '}
               {media.number_of_episodes}
             </div>
           )}
@@ -415,33 +416,33 @@ function MediaDetails() {
           <h2 className="mb-4 border-bottom border-secondary pb-2">
             You Might Also Like
           </h2>
-          <div className="row row-cols-2 row-cols-md-3 row-cols-lg-6 g-3">
+          <div className="row">
             {similarMediaCards}
           </div>
         </section>
       )}
 
       {/* Rating Modal */}
-      <Modal show={showRatingModal} onClose={() => setShowRatingModal(false)}>
-        <div className="text-center">
-          <h3 className="mb-4">
-            Rate this {mediaType === "movie" ? "Movie" : "Show"}
-          </h3>
-          <div className="mb-3">{ratingStars}</div>
-          <p className="fs-4 text-warning mb-4">
-            {hoverRating || userRating || 0}/10
-          </p>
-          <button
-            className="btn btn-secondary"
-            onClick={() => {
-              setShowRatingModal(false);
-              setHoverRating(0);
-            }}
-          >
-            Cancel
-          </button>
-        </div>
-      </Modal>
+      {showRatingModal && (
+        <Modal 
+          show={showRatingModal} 
+          onHide={handleCloseModal}
+          title={`Rate this ${mediaType === 'movie' ? 'Movie' : 'Show'}`}
+        >
+          <div className="text-center">
+            <div className="mb-3">{ratingStars}</div>
+            <p className="fs-4 text-warning mb-4">
+              {hoverRating || userRating || 0}/10
+            </p>
+            <button
+              className="btn btn-secondary"
+              onClick={handleCloseModal}
+            >
+              Cancels
+            </button>
+          </div>
+        </Modal>
+      )}
     </div>
   );
 }
