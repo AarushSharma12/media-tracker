@@ -193,7 +193,13 @@ export async function getUserMediaStatus(userId, mediaId, mediaType) {
   }
 }
 
-export async function updateWatchedStatus(userId, mediaId, mediaType, watched) {
+export async function updateWatchedStatus(
+  userId,
+  mediaId,
+  mediaType,
+  watched,
+  mediaData = null
+) {
   try {
     const userMediaRef = doc(db, "userMedia", userId);
     const docSnap = await getDoc(userMediaRef);
@@ -202,13 +208,47 @@ export async function updateWatchedStatus(userId, mediaId, mediaType, watched) {
       await createUserMediaLists(userId);
     }
 
-    const mediaItem = {
-      id: mediaId,
-      mediaType: mediaType,
-      watchedAt: new Date(),
-    };
-
     if (watched) {
+      // When marking as watched, we need the full media data
+      let mediaItem;
+
+      if (mediaData) {
+        // If media data is provided, use it
+        mediaItem = {
+          id: mediaId,
+          mediaType: mediaType,
+          title: mediaData.title,
+          poster_path: mediaData.poster_path,
+          vote_average: mediaData.vote_average,
+          release_date: mediaData.release_date,
+          watchedAt: new Date(),
+        };
+      } else {
+        // If no media data provided, try to get it from watchlist
+        const data = docSnap.data();
+        const watchlist = data.watchlist || [];
+        const watchlistItem = watchlist.find(
+          (item) => item.id === mediaId && item.mediaType === mediaType
+        );
+
+        if (watchlistItem) {
+          mediaItem = {
+            ...watchlistItem,
+            watchedAt: new Date(),
+          };
+          // Remove addedAt since we're moving to completed
+          delete mediaItem.addedAt;
+        } else {
+          // Fallback with minimal data
+          mediaItem = {
+            id: mediaId,
+            mediaType: mediaType,
+            title: "Unknown",
+            watchedAt: new Date(),
+          };
+        }
+      }
+
       await updateDoc(userMediaRef, {
         completed: arrayUnion(mediaItem),
         lastUpdated: new Date(),
@@ -361,6 +401,30 @@ export async function moveToWatching(userId, mediaData) {
       lastUpdated: new Date(),
     });
 
+    return true;
+  } catch (err) {
+    throw err;
+  }
+}
+
+export async function removeFromList(userId, mediaId, mediaType, listType) {
+  try {
+    const userMediaRef = doc(db, "userMedia", userId);
+    const docSnap = await getDoc(userMediaRef);
+
+    if (docSnap.exists()) {
+      const currentList = docSnap.data()[listType] || [];
+      const itemToRemove = currentList.find(
+        (item) => item.id === mediaId && item.mediaType === mediaType
+      );
+
+      if (itemToRemove) {
+        await updateDoc(userMediaRef, {
+          [listType]: arrayRemove(itemToRemove),
+          lastUpdated: new Date(),
+        });
+      }
+    }
     return true;
   } catch (err) {
     throw err;

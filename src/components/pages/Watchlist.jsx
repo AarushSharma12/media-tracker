@@ -1,8 +1,10 @@
 import { useState, useEffect } from "react";
 import { useAuth } from "../../hooks/useAuth";
+import { useWatchlist } from "../../hooks/useWatchlist";
 import {
   getUserMediaLists,
   removeFromWatchlist,
+  removeFromList,
   updateWatchedStatus,
 } from "../../services/userService";
 import { getImageUrl } from "../../services/tmdbApi";
@@ -11,6 +13,7 @@ import LoadingSpinner from "../common/LoadingSpinner";
 
 function Watchlist() {
   const { user } = useAuth();
+  const { removeFromWatchlistCache, forceRefresh } = useWatchlist();
   const [mediaLists, setMediaLists] = useState({
     watchlist: [],
     watching: [],
@@ -45,26 +48,49 @@ function Watchlist() {
   async function handleRemoveFromList(mediaId, mediaType, listType) {
     try {
       if (listType === "watchlist") {
+        // Update global context cache immediately for watchlist
+        removeFromWatchlistCache(mediaId, mediaType);
+        // Then update server
         await removeFromWatchlist(user.uid, mediaId, mediaType);
+      } else {
+        // For other lists (completed, favorites, watching), use generic remove
+        await removeFromList(user.uid, mediaId, mediaType, listType);
       }
+      // Refresh the local lists
       await fetchUserLists();
     } catch (err) {
+      console.error("Failed to remove item:", err);
       alert("Failed to remove item. Please try again.");
+      // Refresh context to sync with server state for watchlist
+      if (listType === "watchlist" && forceRefresh) {
+        forceRefresh();
+      }
     }
   }
 
   async function handleMarkAsWatched(mediaItem) {
     try {
+      // First update the watched status (this should add to completed list)
       await updateWatchedStatus(
         user.uid,
         mediaItem.id,
         mediaItem.mediaType,
         true
       );
+
+      // Then remove from watchlist
+      removeFromWatchlistCache(mediaItem.id, mediaItem.mediaType);
       await removeFromWatchlist(user.uid, mediaItem.id, mediaItem.mediaType);
+
+      // Refresh the lists to get updated data
       await fetchUserLists();
     } catch (err) {
+      console.error("Failed to mark as watched:", err);
       alert("Failed to update status. Please try again.");
+      // Refresh context to sync with server state
+      if (forceRefresh) {
+        forceRefresh();
+      }
     }
   }
 

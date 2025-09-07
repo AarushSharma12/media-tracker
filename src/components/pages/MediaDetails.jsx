@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useAuth } from "../../hooks/useAuth";
+import { useWatchlist } from "../../hooks/useWatchlist";
 import {
   getMediaDetails,
   getMediaCredits,
@@ -22,6 +23,8 @@ function MediaDetails() {
   const { mediaType, id } = useParams();
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { isInWatchlist, addToWatchlistCache, removeFromWatchlistCache } =
+    useWatchlist();
 
   const [media, setMedia] = useState(null);
   const [credits, setCredits] = useState(null);
@@ -30,7 +33,6 @@ function MediaDetails() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  const [isInWatchlist, setIsInWatchlist] = useState(false);
   const [isWatched, setIsWatched] = useState(false);
   const [userRating, setUserRating] = useState(0);
   const [showRatingModal, setShowRatingModal] = useState(false);
@@ -69,37 +71,44 @@ function MediaDetails() {
     if (!user) return;
     try {
       const status = await getUserMediaStatus(user.uid, id, mediaType);
-      setIsInWatchlist(status.inWatchlist || false);
       setIsWatched(status.watched || false);
       setUserRating(status.rating || 0);
     } catch (err) {}
   }
 
-  function handleWatchlistToggle() {
+  async function handleWatchlistToggle() {
     if (!user) {
       navigate("/login");
       return;
     }
-    async function toggleWatchlist() {
-      try {
-        if (isInWatchlist) {
-          await removeFromWatchlist(user.uid, id, mediaType);
-          setIsInWatchlist(false);
-        } else {
-          const mediaData = {
-            id,
-            mediaType,
-            title: media.title || media.name,
-            poster_path: media.poster_path,
-            vote_average: media.vote_average,
-            release_date: media.release_date || media.first_air_date,
-          };
-          await addToWatchlist(user.uid, mediaData);
-          setIsInWatchlist(true);
-        }
-      } catch (err) {}
+
+    const currentlyInWatchlist = isInWatchlist(id, mediaType);
+
+    try {
+      if (currentlyInWatchlist) {
+        removeFromWatchlistCache(id, mediaType);
+        await removeFromWatchlist(user.uid, id, mediaType);
+      } else {
+        addToWatchlistCache(id, mediaType);
+        const mediaData = {
+          id,
+          mediaType,
+          title: media.title || media.name,
+          poster_path: media.poster_path,
+          vote_average: media.vote_average,
+          release_date: media.release_date || media.first_air_date,
+        };
+        await addToWatchlist(user.uid, mediaData);
+      }
+    } catch (err) {
+      // Revert on error
+      if (currentlyInWatchlist) {
+        addToWatchlistCache(id, mediaType);
+      } else {
+        removeFromWatchlistCache(id, mediaType);
+      }
+      alert("Failed to update watchlist. Please try again.");
     }
-    toggleWatchlist();
   }
 
   function handleWatchedToggle() {
@@ -109,9 +118,26 @@ function MediaDetails() {
     }
     async function toggleWatched() {
       try {
-        await updateWatchedStatus(user.uid, id, mediaType, !isWatched);
+        const mediaData = isWatched
+          ? null
+          : {
+              title: media.title || media.name,
+              poster_path: media.poster_path,
+              vote_average: media.vote_average,
+              release_date: media.release_date || media.first_air_date,
+            };
+
+        await updateWatchedStatus(
+          user.uid,
+          id,
+          mediaType,
+          !isWatched,
+          mediaData
+        );
         setIsWatched(!isWatched);
-      } catch (err) {}
+      } catch (err) {
+        console.error("Failed to update watched status:", err);
+      }
     }
     toggleWatched();
   }
@@ -277,16 +303,22 @@ function MediaDetails() {
               <div className="d-flex flex-wrap gap-2">
                 <button
                   className={`btn ${
-                    isInWatchlist ? "btn-success" : "btn-outline-light"
+                    isInWatchlist(id, mediaType)
+                      ? "btn-success"
+                      : "btn-outline-light"
                   }`}
                   onClick={handleWatchlistToggle}
                 >
                   <i
                     className={`bi bi-${
-                      isInWatchlist ? "check-circle-fill" : "plus-circle"
+                      isInWatchlist(id, mediaType)
+                        ? "check-circle-fill"
+                        : "plus-circle"
                     } me-2`}
                   ></i>
-                  {isInWatchlist ? "In Watchlist" : "Add to Watchlist"}
+                  {isInWatchlist(id, mediaType)
+                    ? "In Watchlist"
+                    : "Add to Watchlist"}
                 </button>
                 <button
                   className={`btn ${

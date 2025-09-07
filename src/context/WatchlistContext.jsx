@@ -1,6 +1,6 @@
 import { createContext, useState, useEffect } from "react";
 import { useAuth } from "../hooks/useAuth";
-import { getUserMediaLists } from "../services/userService.js";
+import { getUserMediaLists } from "../services/userService";
 
 export const WatchlistContext = createContext();
 
