@@ -37,6 +37,7 @@ function MediaDetails() {
   const [userRating, setUserRating] = useState(0);
   const [showRatingModal, setShowRatingModal] = useState(false);
   const [hoverRating, setHoverRating] = useState(0);
+  const [ratingLoading, setRatingLoading] = useState(false);
 
   useEffect(() => {
     fetchMediaData();
@@ -149,11 +150,17 @@ function MediaDetails() {
     }
     async function saveRating() {
       try {
+        setRatingLoading(true);
         await addRating(user.uid, id, mediaType, rating);
         setUserRating(rating);
         setShowRatingModal(false);
         setHoverRating(0);
-      } catch (err) {}
+      } catch (err) {
+        console.error("Failed to save rating:", err);
+        alert("Failed to save rating. Please try again.");
+      } finally {
+        setRatingLoading(false);
+      }
     }
     saveRating();
   }
@@ -423,13 +430,32 @@ function MediaDetails() {
           title={`Rate this ${mediaType === "movie" ? "Movie" : "Show"}`}
         >
           <div className="text-center">
+            <p className="mb-3">
+              Click on a star to rate this{" "}
+              {mediaType === "movie" ? "movie" : "TV show"}
+            </p>
             <div className="mb-3">{ratingStars}</div>
             <p className="fs-4 text-warning mb-4">
               {hoverRating || userRating || 0}/10
             </p>
-            <button className="btn btn-secondary" onClick={handleCloseModal}>
-              Cancels
-            </button>
+            <div className="d-flex gap-2 justify-content-center">
+              {userRating > 0 && (
+                <button
+                  className="btn btn-outline-danger"
+                  onClick={() => handleRating(0)}
+                  disabled={ratingLoading}
+                >
+                  Remove Rating
+                </button>
+              )}
+              <button
+                className="btn btn-secondary"
+                onClick={handleCloseModal}
+                disabled={ratingLoading}
+              >
+                Cancel
+              </button>
+            </div>
           </div>
         </Modal>
       )}

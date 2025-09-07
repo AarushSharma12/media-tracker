@@ -283,10 +283,24 @@ export async function addRating(userId, mediaId, mediaType, rating) {
     }
 
     const ratingKey = `${mediaType}_${mediaId}`;
-    await updateDoc(userMediaRef, {
-      [`ratings.${ratingKey}`]: rating,
-      lastUpdated: new Date(),
-    });
+
+    if (rating === 0) {
+      // Remove the rating if it's 0
+      const currentData = docSnap.data() || {};
+      const ratings = { ...(currentData.ratings || {}) };
+      delete ratings[ratingKey];
+
+      await updateDoc(userMediaRef, {
+        ratings: ratings,
+        lastUpdated: new Date(),
+      });
+    } else {
+      // Add or update the rating
+      await updateDoc(userMediaRef, {
+        [`ratings.${ratingKey}`]: rating,
+        lastUpdated: new Date(),
+      });
+    }
     return true;
   } catch (err) {
     throw err;

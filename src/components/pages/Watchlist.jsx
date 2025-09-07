@@ -146,6 +146,10 @@ function Watchlist() {
     const year = releaseDate ? new Date(releaseDate).getFullYear() : "Unknown";
     const rating = item.vote_average ? item.vote_average.toFixed(1) : "N/A";
 
+    // Get user rating from mediaLists.ratings
+    const ratingKey = `${item.mediaType}_${item.id}`;
+    const userRating = mediaLists.ratings?.[ratingKey] || 0;
+
     return (
       <div
         key={`${item.mediaType}-${item.id}`}
@@ -184,10 +188,15 @@ function Watchlist() {
                     <span className="text-muted small">{year}</span>
                   </div>
 
-                  <div className="mb-2">
+                  <div className="mb-2 d-flex gap-2 flex-wrap">
                     <span className="badge bg-warning text-dark">
                       ⭐ {rating}
                     </span>
+                    {userRating > 0 && (
+                      <span className="badge bg-success">
+                        My Rating: {userRating}/10
+                      </span>
+                    )}
                   </div>
 
                   {item.addedAt && (
