@@ -50,6 +50,9 @@ function Header() {
                 <Link className="nav-link fw-medium" to="/dashboard">
                   Dashboard
                 </Link>
+                <Link className="nav-link fw-medium" to="/watchlist">
+                  Watchlist
+                </Link>
                 <button
                   className="btn btn-outline-light btn-sm ms-2 fw-medium"
                   onClick={handleLogout}

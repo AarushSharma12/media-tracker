@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useAuth } from "../../hooks/useAuth";
-import { updateUserDisplayName } from "../../services/userService";
+import { updateUserDisplayName } from "../../services/userService.js";
 
 function Dashboard() {
   const { user } = useAuth();

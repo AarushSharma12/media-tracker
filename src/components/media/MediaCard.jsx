@@ -1,13 +1,73 @@
-import { Link } from "react-router-dom";
+import { useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { useAuth } from "../../hooks/useAuth";
+import { useWatchlist } from "../../hooks/useWatchlist";
 import { getImageUrl } from "../../services/tmdbApi";
+import {
+  addToWatchlist,
+  removeFromWatchlist,
+} from "../../services/userService.js";
 
 function MediaCard({ media, showAddButton = false }) {
+  const { user } = useAuth();
+  const { isInWatchlist, addToWatchlistCache, removeFromWatchlistCache } =
+    useWatchlist();
+  const navigate = useNavigate();
+  const [loading, setLoading] = useState(false);
+
   const title = media.title || media.name;
   const releaseDate = media.release_date || media.first_air_date;
   const mediaType = media.media_type || (media.title ? "movie" : "tv");
   const releaseYear = releaseDate ? new Date(releaseDate).getFullYear() : "N/A";
   const rating = media.vote_average ? media.vote_average.toFixed(1) : "N/A";
   const linkUrl = `/${mediaType}/${media.id}`;
+
+  const itemInWatchlist = isInWatchlist(media.id, mediaType);
+
+  async function handleWatchlistToggle(event) {
+    event.preventDefault();
+    event.stopPropagation();
+
+    if (!user) {
+      navigate("/login");
+      return;
+    }
+
+    try {
+      setLoading(true);
+
+      if (itemInWatchlist) {
+        // Optimistically update UI first
+        removeFromWatchlistCache(media.id, mediaType);
+        // Then update server
+        await removeFromWatchlist(user.uid, media.id, mediaType);
+      } else {
+        // Optimistically update UI first
+        addToWatchlistCache(media.id, mediaType);
+        // Then update server
+        const mediaData = {
+          id: media.id,
+          mediaType: mediaType,
+          title: title,
+          poster_path: media.poster_path,
+          vote_average: media.vote_average,
+          release_date: releaseDate,
+        };
+        await addToWatchlist(user.uid, mediaData);
+      }
+    } catch (err) {
+      console.error("Watchlist toggle error:", err);
+      // Revert optimistic update on error
+      if (itemInWatchlist) {
+        addToWatchlistCache(media.id, mediaType);
+      } else {
+        removeFromWatchlistCache(media.id, mediaType);
+      }
+      alert("Failed to update watchlist. Please try again.");
+    } finally {
+      setLoading(false);
+    }
+  }
 
   return (
     <div className="col-md-3 col-sm-6 mb-4">
@@ -61,13 +121,29 @@ function MediaCard({ media, showAddButton = false }) {
           {showAddButton && (
             <div className="mt-auto">
               <button
-                className="btn btn-primary btn-sm w-100"
-                onClick={(e) => {
-                  e.preventDefault();
-                  // TODO: Add to watchlist functionality
-                }}
+                className={`btn btn-sm w-100 ${
+                  itemInWatchlist ? "btn-success" : "btn-primary"
+                }`}
+                onClick={handleWatchlistToggle}
+                disabled={loading}
               >
-                + Add to Watchlist
+                {loading ? (
+                  <>
+                    <span
+                      className="spinner-border spinner-border-sm me-2"
+                      role="status"
+                    ></span>
+                    {itemInWatchlist ? "Removing..." : "Adding..."}
+                  </>
+                ) : (
+                  <>
+                    {itemInWatchlist ? (
+                      <>✓ In Watchlist</>
+                    ) : (
+                      <>+ Add to Watchlist</>
+                    )}
+                  </>
+                )}
               </button>
             </div>
           )}
