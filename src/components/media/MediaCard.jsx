@@ -8,6 +8,7 @@ import {
   removeFromWatchlist,
   addRating,
   getUserMediaStatus,
+  updateWatchedStatus,
 } from "../../services/userService.js";
 import Modal from "../common/Modal";
 
@@ -99,8 +100,36 @@ function MediaCard({ media, showAddButton = false }) {
 
     try {
       setRatingLoading(true);
+
+      // Save the rating
       await addRating(user.uid, media.id, mediaType, rating);
       setUserRating(rating);
+
+      // If rating is > 0, automatically mark as watched and add to completed
+      if (rating > 0) {
+        const mediaData = {
+          title: title,
+          poster_path: media.poster_path,
+          vote_average: media.vote_average,
+          release_date: releaseDate,
+        };
+
+        // Mark as watched (this will add to completed list)
+        await updateWatchedStatus(
+          user.uid,
+          media.id,
+          mediaType,
+          true,
+          mediaData
+        );
+
+        // Remove from watchlist if it's there
+        if (itemInWatchlist) {
+          removeFromWatchlistCache(media.id, mediaType);
+          await removeFromWatchlist(user.uid, media.id, mediaType);
+        }
+      }
+
       setShowRatingModal(false);
       setHoverRating(0);
     } catch (err) {
