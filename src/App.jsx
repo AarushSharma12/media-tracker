@@ -13,6 +13,7 @@ import Dashboard from "./components/pages/Dashboard";
 import SearchResults from "./components/pages/SearchResults";
 import MediaDetails from "./components/pages/MediaDetails";
 import Watchlist from "./components/pages/Watchlist";
+import ViewAll from "./components/pages/ViewAll";
 
 // Auth components
 import Login from "./components/auth/Login";
@@ -32,6 +33,7 @@ function App() {
               <Routes>
                 <Route path="/" element={<Home />} />
                 <Route path="/search" element={<SearchResults />} />
+                <Route path="/view-all/:category/:type" element={<ViewAll />} />
                 <Route path="/login" element={<Login />} />
                 <Route path="/signup" element={<Signup />} />
 

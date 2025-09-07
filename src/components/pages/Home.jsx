@@ -99,7 +99,12 @@ const Home = () => {
         <section className="mb-5">
           <div className="d-flex justify-content-between align-items-center mb-4">
             <h2 className="fw-bold">🔥 Trending This Week</h2>
-            <button className="btn btn-outline-primary btn-sm">View All</button>
+            <Link
+              to="/view-all/trending/all"
+              className="btn btn-outline-primary btn-sm"
+            >
+              View All
+            </Link>
           </div>
           <div className="row">
             {trendingContent.map((item) => (
@@ -112,7 +117,12 @@ const Home = () => {
         <section className="mb-5">
           <div className="d-flex justify-content-between align-items-center mb-4">
             <h2 className="fw-bold">🎬 Popular Movies</h2>
-            <button className="btn btn-outline-primary btn-sm">View All</button>
+            <Link
+              to="/view-all/popular/movie"
+              className="btn btn-outline-primary btn-sm"
+            >
+              View All
+            </Link>
           </div>
           <div className="row">
             {popularMovies.map((movie) => (
@@ -129,7 +139,12 @@ const Home = () => {
         <section className="mb-5">
           <div className="d-flex justify-content-between align-items-center mb-4">
             <h2 className="fw-bold">📺 Popular TV Shows</h2>
-            <button className="btn btn-outline-primary btn-sm">View All</button>
+            <Link
+              to="/view-all/popular/tv"
+              className="btn btn-outline-primary btn-sm"
+            >
+              View All
+            </Link>
           </div>
           <div className="row">
             {popularTVShows.map((show) => (
