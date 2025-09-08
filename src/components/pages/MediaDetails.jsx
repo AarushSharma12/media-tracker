@@ -151,30 +151,8 @@ function MediaDetails() {
     async function saveRating() {
       try {
         setRatingLoading(true);
-
-        // Save the rating
         await addRating(user.uid, id, mediaType, rating);
         setUserRating(rating);
-
-        // If rating is > 0, automatically mark as watched
-        if (rating > 0 && !isWatched) {
-          const mediaData = {
-            title: media.title || media.name,
-            poster_path: media.poster_path,
-            vote_average: media.vote_average,
-            release_date: media.release_date || media.first_air_date,
-          };
-
-          await updateWatchedStatus(user.uid, id, mediaType, true, mediaData);
-          setIsWatched(true);
-
-          // Remove from watchlist if it's there
-          if (isInWatchlist(id, mediaType)) {
-            removeFromWatchlistCache(id, mediaType);
-            await removeFromWatchlist(user.uid, id, mediaType);
-          }
-        }
-
         setShowRatingModal(false);
         setHoverRating(0);
       } catch (err) {
