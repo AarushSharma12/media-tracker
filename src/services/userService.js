@@ -319,7 +319,6 @@ export async function getUserMediaLists(userId) {
       await createUserMediaLists(userId);
       return {
         watchlist: [],
-        watching: [],
         completed: [],
         favorites: [],
         ratings: {},
@@ -329,7 +328,6 @@ export async function getUserMediaLists(userId) {
   } catch (err) {
     return {
       watchlist: [],
-      watching: [],
       completed: [],
       favorites: [],
       ratings: {},

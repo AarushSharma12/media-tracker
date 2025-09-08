@@ -16,7 +16,6 @@ function Watchlist() {
   const { removeFromWatchlistCache, forceRefresh } = useWatchlist();
   const [mediaLists, setMediaLists] = useState({
     watchlist: [],
-    watching: [],
     completed: [],
     favorites: [],
   });
@@ -111,10 +110,6 @@ function Watchlist() {
       watchlist: {
         title: "Your watchlist is empty",
         description: "Start adding movies and TV shows you want to watch later",
-      },
-      watching: {
-        title: "Not currently watching anything",
-        description: "Mark shows as currently watching to track your progress",
       },
       completed: {
         title: "No completed items yet",
@@ -281,16 +276,6 @@ function Watchlist() {
                 onClick={() => setActiveTab("watchlist")}
               >
                 Watchlist ({mediaLists.watchlist?.length || 0})
-              </button>
-            </li>
-            <li className="nav-item">
-              <button
-                className={`nav-link ${
-                  activeTab === "watching" ? "active" : ""
-                }`}
-                onClick={() => setActiveTab("watching")}
-              >
-                Currently Watching ({mediaLists.watching?.length || 0})
               </button>
             </li>
             <li className="nav-item">

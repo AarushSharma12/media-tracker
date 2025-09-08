@@ -76,15 +76,6 @@ function Dashboard() {
         <div className="col-md-4">
           <div className="card">
             <div className="card-body">
-              <h5 className="card-title">Currently Watching</h5>
-              <p className="card-text">Shows you're watching now</p>
-              <button className="btn btn-primary btn-sm">Coming Soon</button>
-            </div>
-          </div>
-        </div>
-        <div className="col-md-4">
-          <div className="card">
-            <div className="card-body">
               <h5 className="card-title">Completed</h5>
               <p className="card-text">Movies and shows you've finished</p>
               <button className="btn btn-primary btn-sm">Coming Soon</button>
